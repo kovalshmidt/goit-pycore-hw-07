@@ -18,7 +18,7 @@ class Phone(Field):
         if len(phone_number) == 10 and phone_number.isdigit():
             super().__init__(phone_number)
         else:
-            raise ValueError(f"Wrong phone number '{phone_number}' format")
+            raise ValueError(f"Wrong phone number '{phone_number}' format. Expected xxxxxxxxxx")
         
     def __str__(self):
         return super().__str__()
@@ -121,13 +121,27 @@ class AddressBook(UserDict):
 
 def input_error(func):
     def inner(*args, **kwargs):
+        funciton = func.__name__
+    
         try:
             return func(*args, **kwargs)
-        except (IndexError, KeyError):
+        except IndexError:
+            if funciton == 'add_contact':
+                return "Usage: add <name> <phone>"
+            if funciton == 'change_contact':
+                return "Usage: change <name> <old_phone> <new_phone>"
+            if funciton == 'show_phone':
+                return "Usage: phone <name>"
+            if funciton == 'add_birthday':
+                return "Usage: add-birthday <name> <DD.MM.YYYY>"
+            if funciton == 'show-birthday':
+                return "Usage: show-birthday <name>"
             return "Enter the argument for the command"
-        except ValueError as e:
+        except (ValueError, IndexError) as e:
             return str(e)
-
+        except AttributeError as e:
+            return str(e)
+        
     return inner
 
 def parse_input(user_input):
@@ -137,7 +151,7 @@ def parse_input(user_input):
 
 @input_error
 def add_contact(args, book: AddressBook):
-    name, phone_number, *_ = args
+    name, phone_number = args[0], args[1]
     record = book.find(name)
     message = "Contact updated."
     if record is None:
@@ -151,7 +165,7 @@ def add_contact(args, book: AddressBook):
 
 @input_error
 def change_contact(args, book: AddressBook):
-    name, old_phone, new_phone, *_ = args
+    name, old_phone, new_phone = args[0], args[1], args[2]
     record = book.find(name)
     if record:
         record.edit_phone(old_phone, new_phone)
@@ -173,12 +187,14 @@ def show_all(book: AddressBook):
         return "No contacts found."
     result = []
     for record in book.data.values():
-        result.append(f"{record.name}: {', '.join(str(p) for p in record.phones)}")
+        birthday_str = f" ({record.birthday})" if record.birthday else ""
+        phones_str = ", ".join(str(p) for p in record.phones)
+        result.append(f"{record.name}{birthday_str}: {phones_str}")
     return "\n".join(result)
 
 @input_error
 def add_birthday(args, book: AddressBook):
-    name, birthday_date = args
+    name, birthday_date = args[0], args[1]
     record = book.find(name)
     if record:
         record.add_birthday(birthday_date)
@@ -248,10 +264,13 @@ if __name__ == "__main__":
     main()
 
 # hello # How can I help you?
-# add ihor 123 # Wrong phone number '123' format
+# add # Usage: add <name> <phone>
+# add ihor 123 # Wrong phone number '123' format. Expected xxxxxxxxxx
 # add ihor 1234567890 # Contact updated.
 # add alex 0987654321 # Contact added.
+# phone # Usage: phone <name>
 # phone alex # alex: 0987654321
+# change # Usage: change <name> <old_phone> <new_phone>
 # change alex 0987654321 0000000000 # Contact updated.
 # phone alex # alex: 0000000000
 # add alex 1111111111 # Contact updated.
