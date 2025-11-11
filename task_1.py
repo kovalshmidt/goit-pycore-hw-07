@@ -1,12 +1,14 @@
 from collections import UserDict
 from datetime import datetime, timedelta
 
+
 class Field:
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return str(self.value)
+
 
 class Name(Field):
     def __init__(self, name):
@@ -18,11 +20,15 @@ class Phone(Field):
         if len(phone_number) == 10 and phone_number.isdigit():
             super().__init__(phone_number)
         else:
-            raise ValueError(f"Wrong phone number '{phone_number}' format. Expected xxxxxxxxxx")
-        
+            raise ValueError(
+                f"Wrong phone number '{phone_number}' format. "
+                "Expected xxxxxxxxxx"
+            )
+
     def __str__(self):
         return super().__str__()
-        
+
+
 class Birthday(Field):
     def __init__(self, birthday_date):
         try:
@@ -30,6 +36,7 @@ class Birthday(Field):
             super().__init__(birthday_date)
         except ValueError:
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
+
 
 class Record:
     def __init__(self, name):
@@ -39,7 +46,7 @@ class Record:
 
     def add_phone(self, phone_number):
         self.phones.append(Phone(phone_number))
-   
+
     def add_birthday(self, birthday_date):
         birthday = Birthday(birthday_date)
         self.birthday = birthday
@@ -67,7 +74,12 @@ class Record:
             self.phones.remove(phone)
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+        phones_str = "; ".join(p.value for p in self.phones)
+        return (
+            f"Contact name: {self.name.value}, "
+            f"phones: {phones_str}"
+        )
+
 
 class AddressBook(UserDict):
 
@@ -82,8 +94,8 @@ class AddressBook(UserDict):
     def delete(self, name):
         if name in self.data:
             self.data.pop(name)
-    
-    def get_upcoming_birthdays(self)-> list:
+
+    def get_upcoming_birthdays(self) -> list:
         upcoming_birthdays = []
         today = datetime.today().date()
         end_date = today + timedelta(days=7)
@@ -91,9 +103,15 @@ class AddressBook(UserDict):
         for record in self.data.values():
             # Get user birthdat or skip if error
             try:
-                birthday_date = datetime.strptime(str(record.birthday), "%d.%m.%Y").date()
+                birthday_date = datetime.strptime(
+                    str(record.birthday),
+                    "%d.%m.%Y"
+                ).date()
             except ValueError:
-                print(f"Error in date format for {record.name}: {record.birthday}")
+                print(
+                    f"Error in date format for {record.name}: "
+                    f"{record.birthday}"
+                )
                 continue
 
             # Transform in this year date
@@ -109,45 +127,53 @@ class AddressBook(UserDict):
                 day_of_week = birthday_this_year.weekday()
 
                 if day_of_week == 5:
-                    congratulation_date = birthday_this_year + timedelta(days=2)
+                    congratulation_date = (
+                        birthday_this_year
+                        + timedelta(days=2)
+                    )
                 elif day_of_week == 6:
-                    congratulation_date = birthday_this_year + timedelta(days=1)
+                    congratulation_date = (
+                        birthday_this_year
+                        + timedelta(days=1)
+                    )
 
                 upcoming_birthdays.append({
-                    "name": record.name, "congratulation_date": congratulation_date.strftime("%d.%m.%Y")
+                    "name": record.name, "congratulation_date":
+                    congratulation_date.strftime("%d.%m.%Y")
                 })
 
         return upcoming_birthdays
 
+
 def input_error(func):
     def inner(*args, **kwargs):
-        funciton = func.__name__
-    
+        function = func.__name__
+
         try:
             return func(*args, **kwargs)
         except IndexError:
-            if funciton == 'add_contact':
+            if function == "add_contact":
                 return "Usage: add <name> <phone>"
-            if funciton == 'change_contact':
+            if function == "change_contact":
                 return "Usage: change <name> <old_phone> <new_phone>"
-            if funciton == 'show_phone':
+            if function == "show_phone":
                 return "Usage: phone <name>"
-            if funciton == 'add_birthday':
+            if function == "add_birthday":
                 return "Usage: add-birthday <name> <DD.MM.YYYY>"
-            if funciton == 'show-birthday':
+            if function == "show-birthday":
                 return "Usage: show-birthday <name>"
             return "Enter the argument for the command"
-        except (ValueError, IndexError) as e:
+        except ValueError as e:
             return str(e)
-        except AttributeError as e:
-            return str(e)
-        
+
     return inner
+
 
 def parse_input(user_input):
     cmd, *args = user_input.split()
     cmd = cmd.strip().lower()
     return cmd, *args
+
 
 @input_error
 def add_contact(args, book: AddressBook):
@@ -163,6 +189,7 @@ def add_contact(args, book: AddressBook):
 
     return message
 
+
 @input_error
 def change_contact(args, book: AddressBook):
     name, old_phone, new_phone = args[0], args[1], args[2]
@@ -173,6 +200,7 @@ def change_contact(args, book: AddressBook):
     else:
         return f"No contact found with name: {name}"
 
+
 @input_error
 def show_phone(args, book: AddressBook):
     name = args[0]
@@ -181,7 +209,8 @@ def show_phone(args, book: AddressBook):
         return f"{name}: {', '.join(str(p) for p in record.phones)}"
     else:
         return f"No contact found with name: {name}"
-    
+
+
 def show_all(book: AddressBook):
     if not book.data:
         return "No contacts found."
@@ -191,6 +220,7 @@ def show_all(book: AddressBook):
         phones_str = ", ".join(str(p) for p in record.phones)
         result.append(f"{record.name}{birthday_str}: {phones_str}")
     return "\n".join(result)
+
 
 @input_error
 def add_birthday(args, book: AddressBook):
@@ -211,7 +241,7 @@ def show_birthday(args, book: AddressBook):
         return f"{name}: {record.birthday}"
     else:
         return f"No contact found with name: {name}"
-    
+
 
 @input_error
 def birthdays(book: AddressBook):
@@ -223,7 +253,6 @@ def birthdays(book: AddressBook):
         return "\n".join(lines)
     else:
         return "There are no upcoming birthdays"
-
 
 
 def main():
@@ -263,26 +292,41 @@ def main():
 if __name__ == "__main__":
     main()
 
-# hello # How can I help you?
-# add # Usage: add <name> <phone>
-# add ihor 123 # Wrong phone number '123' format. Expected xxxxxxxxxx
-# add ihor 1234567890 # Contact updated.
-# add alex 0987654321 # Contact added.
-# phone # Usage: phone <name>
-# phone alex # alex: 0987654321
-# change # Usage: change <name> <old_phone> <new_phone>
-# change alex 0987654321 0000000000 # Contact updated.
-# phone alex # alex: 0000000000
-# add alex 1111111111 # Contact updated.
-# all 
-    # ihor: 1234567890
-    # alex: 0987654321, 1111111111
-# add-birthday 27.08.1991 # not enough values to unpack (expected 2, got 1)
-# add-birthday ihor 1991.08.27  # Invalid date format. Use DD.MM.YYYY
-# add-birthday ihor 27.08.1991 # Birthday added.
-# show-birthday ihor # ihor: 27.08.1991
-# add-birthday alex 28.08.1991 # Birthday added.
-# birthdays # There are no upcoming birthdays
-# add marta 7771113330 # Contact added.
-# add-birthday marta 13.11.1991 # Birthday added.
-# birthdays # marta: 13.11.2025
+# Welcome to the assistant bot!
+# Enter a command: hello
+# How can I help you?
+# Enter a command: add ihor 1234567890
+# Contact added.
+# Enter a command: add alex 0987654321
+# Contact added.
+# Enter a command: phone alex
+# alex: 0987654321
+# Enter a command: change alex 0987654321 0000000000
+# Contact updated.
+# Enter a command: phone alex
+# alex: 0000000000
+# Enter a command: add alex 1111111111
+# Contact updated.
+# Enter a command: all
+# ihor: 1234567890
+# alex: 0000000000, 1111111111
+# Enter a command: add-birthday 27.08.1991
+# Usage: add-birthday <name> <DD.MM.YYYY>
+# Enter a command: add-birthday ihor 1991.08.27
+# Invalid date format. Use DD.MM.YYYY
+# Enter a command: add-birthday ihor 27.08.1991
+# Birthday added.
+# Enter a command: show-birthday ihor
+# ihor: 27.08.1991
+# Enter a command: add-birthday alex 28.08.1991
+# Birthday added.
+# Enter a command: birthdays
+# There are no upcoming birthdays
+# Enter a command: add marta 7771113330
+# Contact added.
+# Enter a command: add-birthday marta 13.11.1991
+# Birthday added.
+# Enter a command: birthdays
+# marta: 13.11.2025
+# Enter a command: exit
+# Good bye!
